@@ -1,0 +1,15 @@
+{
+  "name": "vite_from_scratch",
+  "version": "1.0.0",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host"
+  },
+  "devDependencies": {
+    "typescript": "^4.7.4",
+    "vite": "2",
+    "vite-plugin-top-level-await": "^1.1.0",
+    "vite-plugin-wasm": "^1.0.1"
+  }
+}
