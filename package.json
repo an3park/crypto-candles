@@ -4,12 +4,13 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "dev": "vite --host"
+    "dev": "vite --host",
+    "build": "vite build",
+    "preview": "vite preview --host",
+    "test": "vite build && vite preview --host"
   },
   "devDependencies": {
-    "typescript": "^4.7.4",
-    "vite": "2",
-    "vite-plugin-top-level-await": "^1.1.0",
-    "vite-plugin-wasm": "^1.0.1"
+    "typescript": "^5.0.4",
+    "vite": "^4.2.1"
   }
 }
