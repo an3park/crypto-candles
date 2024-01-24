@@ -1,7 +1,5 @@
 import { onTrade } from './binance'
 
-export {}
-
 const canvas = document.getElementById('canvas') as HTMLCanvasElement
 
 canvas.width = window.innerWidth * 0.93
@@ -20,16 +18,19 @@ setInterval(() => {
   }
 }, 20000)
 
-window.onbeforeunload = () => {
-  localStorage.setItem('bars', JSON.stringify(bars))
-}
-
 let price = (bars[bars.length - 1] && bars[bars.length - 1][3]) || 0
 
-let offsetX = ctx.canvas.width * 0.6
-let offsetY = 0
-let scaleY = 6
-let scaleX = 0.5
+const layoutConfig = JSON.parse(localStorage.getItem('layoutConfig') || '{}')
+
+let offsetX: number = layoutConfig.offsetX || ctx.canvas.width * 0.6
+let offsetY: number = layoutConfig.offsetY || 0
+let scaleY: number = layoutConfig.scaleY || 6
+let scaleX: number = layoutConfig.scaleX || 0.5
+
+window.onbeforeunload = () => {
+  localStorage.setItem('bars', JSON.stringify(bars))
+  localStorage.setItem('layoutConfig', JSON.stringify({ offsetX, offsetY, scaleX, scaleY }))
+}
 
 let autoMode = true
 
@@ -51,22 +52,27 @@ const draw = () => {
 
   for (let k = 0; k < bars.length; k++) {
     if (bars[k].length < 4) continue
-    const [o, h, l, c] = bars[k]
+    let o, h, l, c
+    if (bars[k][3] > bars[k][0]) {
+      ;[o, l, h, c] = bars[k]
+    } else {
+      ;[o, h, l, c] = bars[k]
+    }
     const i = bars.length - k - 1
     ctx.fillStyle = c > o ? 'green' : 'tomato'
     ctx.beginPath()
-    ctx.moveTo(x(12 * i + 0), y(c))
-    ctx.lineTo(x(12 * i + 4), y(c))
-    ctx.lineTo(x(12 * i + 4), y(l))
-    ctx.lineTo(x(12 * i + 6), y(l))
-    ctx.lineTo(x(12 * i + 6), y(c))
-    ctx.lineTo(x(12 * i + 10), y(c))
-    ctx.lineTo(x(12 * i + 10), y(o))
-    ctx.lineTo(x(12 * i + 6), y(o))
-    ctx.lineTo(x(12 * i + 6), y(h))
-    ctx.lineTo(x(12 * i + 4), y(h))
-    ctx.lineTo(x(12 * i + 4), y(o))
-    ctx.lineTo(x(12 * i + 0), y(o))
+    ctx.moveTo(x(12 * i + 0), y(c)) // 1
+    ctx.lineTo(x(12 * i + 4), y(c)) // 2
+    ctx.lineTo(x(12 * i + 4), y(l)) // 3
+    ctx.lineTo(x(12 * i + 6), y(l)) // 4
+    ctx.lineTo(x(12 * i + 6), y(c)) // 5
+    ctx.lineTo(x(12 * i + 10), y(c)) // 6
+    ctx.lineTo(x(12 * i + 10), y(o)) // 7
+    ctx.lineTo(x(12 * i + 6), y(o)) // 8
+    ctx.lineTo(x(12 * i + 6), y(h)) // 9
+    ctx.lineTo(x(12 * i + 4), y(h)) // 10
+    ctx.lineTo(x(12 * i + 4), y(o)) // 11
+    ctx.lineTo(x(12 * i + 0), y(o)) // 12
     ctx.closePath()
     ctx.fill()
   }

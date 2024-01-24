@@ -17,7 +17,7 @@ export const onTrade = (cb: (price: number, size: number, buy: boolean) => void)
   binance.addEventListener('message', (e) => {
     const data = JSON.parse(e.data) as BinanceMessage
     if (data.e === 'aggTrade') {
-      cb(parseFloat(data.p), parseFloat(data.q)*10000, !data.m)
+      cb(parseFloat(data.p), parseFloat(data.q) * 10000, !data.m)
     }
   })
 }
