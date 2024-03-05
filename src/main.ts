@@ -222,7 +222,7 @@ function ball() {
     if (newtworth > 500) {
       ctx.fillStyle = colors.accent
       ctx.textAlign = 'center'
-      const text = newtworth > 999 ? `${~~(newtworth / 1000)}M` : `${~~newtworth}K`
+      const text = newtworth > 999 ? `${(newtworth / 1000).toFixed(1)}M` : `${~~newtworth}K`
       ctx.fillText(text, x, y + 8)
     }
   }
