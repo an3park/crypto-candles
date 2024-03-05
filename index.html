@@ -7,10 +7,23 @@
   </head>
   <body style="position: relative; display: flex; margin: 0; overflow: hidden">
     <canvas id="canvas"></canvas>
-    <div id="pricebar" style="width: 100%; border-left: 1px solid rgb(79, 42, 174); cursor: row-resize;"></div>
-    <div style="position: absolute; top: 5px; right: 5px">
-      <div id="coords" style="background-color: wheat;"></div>
+    <div
+      id="pricebar"
+      style="width: 100%; border-left: 1px solid rgb(79, 42, 174); cursor: row-resize"
+    ></div>
+    <div
+      style="
+        width: 100px;
+        position: absolute;
+        display: flex;
+        flex-direction: column;
+        top: 5px;
+        right: 5px;
+      "
+    >
       <button id="autobtn">auto</button>
+      <input type="number" id="volumeLimit" value="0" step="1" />
+      <button id="resetbtn">reset quantity</button>
     </div>
     <script type="module" src="/src/main.ts"></script>
   </body>

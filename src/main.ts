@@ -1,4 +1,11 @@
-import { onTrade } from './binance'
+import './binance'
+import { eventBus } from './eventBus'
+
+const colors = {
+  buy: '#009688',
+  sell: '#fe4a49',
+  accent: '#1e1f26',
+} as const
 
 const canvas = document.getElementById('canvas') as HTMLCanvasElement
 
@@ -59,7 +66,7 @@ const draw = () => {
       ;[o, h, l, c] = bars[k]
     }
     const i = bars.length - k - 1
-    ctx.fillStyle = c > o ? 'green' : 'tomato'
+    ctx.fillStyle = c > o ? colors.buy : colors.sell
     ctx.beginPath()
     ctx.moveTo(x(12 * i + 0), y(c)) // 1
     ctx.lineTo(x(12 * i + 4), y(c)) // 2
@@ -123,7 +130,7 @@ function positionAuto() {
 
 document.getElementById('autobtn')?.addEventListener('click', function () {
   autoMode = !autoMode
-  this.style.backgroundColor = autoMode ? '' : 'tomato'
+  this.style.backgroundColor = autoMode ? '' : colors.sell
 })
 
 // SIDE
@@ -141,10 +148,10 @@ window.addEventListener('mousemove', (e) => {
   offsetY -= dy * price
 })
 
-const displayCoords = document.getElementById('coords') as HTMLDivElement
-ctx.canvas.addEventListener('mousemove', (e) => {
-  displayCoords.innerText = `${e.offsetX}\t${e.offsetY}\n${~~x(e.offsetX)}\t${~~y(e.offsetY)}`
-})
+// const displayCoords = document.getElementById('coords') as HTMLDivElement
+// ctx.canvas.addEventListener('mousemove', (e) => {
+//   displayCoords.innerText = `${e.offsetX}\t${e.offsetY}\n${~~x(e.offsetX)}\t${~~y(e.offsetY)}`
+// })
 
 interface WSData {
   table: string
@@ -170,18 +177,20 @@ let balls = [] as {
   x: number
   y: number
   price: number
+  quantity: number
   rand: number
 }[]
 
-function addBall(buy: boolean, size: number, price: number) {
-  size = size / 1000
+function addBall(buy: boolean, quantity: number, price: number) {
+  const size = quantity * 6
   balls.push({
     ts: Date.now(),
     buy,
-    size: size > 50 ? 50 : size < 1 ? 1 : size,
+    size: size > 40 ? 40 : size < 1 ? 1 : size,
     x: offsetX,
     y: offsetY,
     price,
+    quantity,
     rand: Math.random() / 2 + 0.25,
   })
 }
@@ -193,25 +202,71 @@ setInterval(() => {
 
 function ball() {
   const now = Date.now()
-  balls.forEach((b) => {
+
+  for (let i = 0; i < balls.length; i++) {
+    const b = balls[i]
     const dts = now - b.ts
     ctx.beginPath()
-    ctx.fillStyle = b.buy ? 'green' : 'tomato'
-    ctx.arc(
-      b.x + (dts * (1 - b.rand)) / 5,
-      b.y - scaleY * b.price + (b.rand * (b.buy ? 1 : -1) * dts) / 5,
-      b.size,
-      0,
-      2 * Math.PI
-    )
+    ctx.fillStyle = b.buy ? colors.buy : colors.sell
+    const x = b.x + (dts * (1 - b.rand)) / 5
+    const y = b.y - scaleY * b.price + (b.rand * (b.buy ? 1 : -1) * dts) / 5
+    ctx.arc(x, y, b.size, 0, 2 * Math.PI)
     ctx.fill()
-  })
+  }
+  for (let i = 0; i < balls.length; i++) {
+    const b = balls[i]
+    const dts = now - b.ts
+    const x = b.x + (dts * (1 - b.rand)) / 5
+    const y = b.y - scaleY * b.price + (b.rand * (b.buy ? 1 : -1) * dts) / 5
+    const newtworth = (b.quantity * b.price) / 1000
+    if (newtworth > 500) {
+      ctx.fillStyle = colors.accent
+      ctx.textAlign = 'center'
+      const text = newtworth > 999 ? `${~~(newtworth / 1000)}M` : `${~~newtworth}K`
+      ctx.fillText(text, x, y + 8)
+    }
+  }
 }
+
+const trades = [] as {
+  p: number
+  t: number
+  b: boolean
+  q: number
+}[]
+
+let volumeLimit = 0
+
+document
+  .getElementById('volumeLimit')
+  ?.addEventListener('input', function (this: HTMLInputElement) {
+    volumeLimit = +this.value
+  })
+document.getElementById('resetbtn')?.addEventListener('click', function () {
+  trades.length = 0
+})
 
 function frame() {
   clear()
   draw()
   ball()
+
+  let buyes = 0
+  let sells = 0
+  for (let i = 0; i < trades.length; i++) {
+    if (trades[i].q > volumeLimit) {
+      if (trades[i].b) {
+        buyes += trades[i].q
+      } else {
+        sells += trades[i].q
+      }
+    }
+  }
+
+  ctx.fillStyle = 'white'
+  ctx.font = '20px sans-serif'
+  ctx.fillText(`b ${~~buyes} s ${~~sells}`, 100, 50)
+
   requestAnimationFrame(frame)
 }
 frame()
@@ -243,12 +298,11 @@ setInterval(createBar, 5000)
 //   ])
 // }, 100)
 
-function insert(_price: number, size: number, buyer: boolean) {
+function insert(_price: number, quantity: number, buyer: boolean) {
   price = _price
 
-  console.log(price, size)
-
-  addBall(buyer, size, price)
+  // size in usd
+  addBall(buyer, quantity, price)
 
   bars[bars.length - 1][3] = price
   !bars[bars.length - 1][0] && (bars[bars.length - 1][0] = price)
@@ -260,4 +314,12 @@ function insert(_price: number, size: number, buyer: boolean) {
   }
 }
 
-onTrade(insert)
+eventBus.on('trade', (data) => {
+  insert(data.price, data.quantity, data.isBuy)
+  trades.push({
+    p: data.price,
+    t: data.timestamp,
+    b: data.isBuy,
+    q: data.quantity,
+  })
+})

@@ -1,23 +1,40 @@
-interface BinanceMessage {
-  e: 'aggTrade' // Event type
-  E: number // Event time
-  s: string // Symbol
-  a: number // Aggregate trade ID
-  p: string // Price
-  q: string // Quantity
-  f: number // First trade ID
-  l: number // Last trade ID
-  T: number // Trade time
-  m: boolean // Is the buyer the market maker?
+import { eventBus } from './eventBus'
+
+const socketUrl = 'wss://fstream.binance.com/ws/btcusdt@aggTrade'
+
+type Message = {
+  e: 'aggTrade' // event type
+  E: number // event time
+  a: number // aggregate trade ID
+  s: string // symbol
+  p: string // price
+  q: string // quantity
+  f: number // first trade ID
+  l: number // last trade ID
+  T: number // trade time
+  m: boolean // is the buyer the market maker
 }
 
-const binance = new WebSocket('wss://fstream.binance.com/ws/btcusdt@aggTrade')
+function connect() {
+  const socket = new WebSocket(socketUrl)
 
-export const onTrade = (cb: (price: number, size: number, buy: boolean) => void) => {
-  binance.addEventListener('message', (e) => {
-    const data = JSON.parse(e.data) as BinanceMessage
-    if (data.e === 'aggTrade') {
-      cb(parseFloat(data.p), parseFloat(data.q) * 10000, !data.m)
+  socket.onmessage = (event) => {
+    const message = JSON.parse(event.data) as Message
+
+    if (message.e === 'aggTrade') {
+      eventBus.emit('trade', {
+        exchange: 'binance',
+        isBuy: !message.m,
+        price: parseFloat(message.p),
+        quantity: parseFloat(message.q),
+        timestamp: message.T,
+      })
     }
-  })
+  }
+
+  socket.onclose = () => {
+    connect()
+  }
 }
+
+connect()
