@@ -19,7 +19,7 @@ const _bars = localStorage.getItem('bars')
 const bars = ((_bars && JSON.parse(_bars)) || []) as number[][]
 
 setInterval(() => {
-  const del = bars.length - 300
+  const del = bars.length - 1000
   if (del > 0) {
     bars.splice(0, del)
   }
@@ -182,7 +182,7 @@ let balls = [] as {
 }[]
 
 function addBall(buy: boolean, quantity: number, price: number) {
-  const size = quantity * 6
+  const size = quantity * 4
   balls.push({
     ts: Date.now(),
     buy,
